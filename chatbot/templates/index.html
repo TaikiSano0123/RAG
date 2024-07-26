@@ -1,31 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>Gemini Chatbot</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini チャットボット</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Gemini Chatbot</h1>
+    <h1>Gemini チャットボット</h1>
     <div id="chat-container"></div>
     <input type="text" id="user-input" placeholder="メッセージを入力...">
     <button onclick="sendMessage()">送信</button>
 
     <script>
-    function sendMessage() {
-        var userInput = $('#user-input').val();
-        $('#chat-container').append('<p><strong>You:</strong> ' + userInput + '</p>');
-        $('#user-input').val('');
+        function sendMessage() {
+            var userMessage = $('#user-input').val();
+            if (userMessage.trim() === '') return;
 
-        $.ajax({
-            url: '/chat',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ message: userInput }),
-            success: function(response) {
-                $('#chat-container').append('<p><strong>Bot:</strong> ' + response.response + '</p>');
-            }
-        });
-    }
+            $('#chat-container').append('<p><strong>あなた:</strong> ' + userMessage + '</p>');
+            $('#user-input').val('');
+
+            $.ajax({
+                url: '/chat',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({message: userMessage}),
+                success: function(response) {
+                    $('#chat-container').append('<p><strong>ボット:</strong> ' + response.response + '</p>');
+                }
+            });
+        }
     </script>
 </body>
 </html>

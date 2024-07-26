@@ -1,26 +1,25 @@
-from flask import Flask, request, jsonify, render_template
-from google.cloud import aiplatform
+from flask import Flask, render_template, request, jsonify
+import google.generativeai as genai
 
 app = Flask(__name__)
 
-PROJECT_ID = "instance-20240723-013646"  # あなたのプロジェクトIDに置き換えてください
-LOCATION = "us-central1-f"  # 適切なロケーションに変更してください
+@app.route('/test')
+def test():
+    return "Test route is working!"
+
+# Gemini APIの設定
+genai.configure(api_key='AIzaSyAk71sNdS7VRg96eCHflHULLaHeDDI0h9E')
+model = genai.GenerativeModel('gemini-pro')
 
 @app.route('/')
-def home():
+def index():
     return render_template('index.html')
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    data = request.json
-    user_input = data['message']
-
-    # Gemini API を呼び出し
-    aiplatform.init(project=PROJECT_ID, location=LOCATION)
-    model = aiplatform.Model(f"projects/{PROJECT_ID}/locations/{LOCATION}/models/gemini-pro")
-    response = model.predict(instances=[{"content": user_input}])
-
-    return jsonify({"response": response.predictions[0]['content']})
+    user_message = request.json['message']
+    response = model.generate_content(user_message)
+    return jsonify({'response': response.text})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)
