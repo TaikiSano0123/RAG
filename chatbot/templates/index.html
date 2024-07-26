@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini チャットボット</title>
+    <title>AIディベートシステム</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+
 <body>
-    <h1>Gemini チャットボット</h1>
-    <div id="chat-container"></div>
-    <input type="text" id="user-input" placeholder="メッセージを入力...">
-    <button onclick="sendMessage()">送信</button>
+    <h1>AIディベートシステム</h1>
+    <div>
+        <h2>チャットボット</h2>
+        <div id="chat-container"></div>
+        <input type="text" id="user-input" placeholder="メッセージを入力...">
+        <button onclick="sendMessage()">送信</button>
+    </div>
+    <div>
+        <h2>AIディベート</h2>
+        <input type="text" id="debate-topic" placeholder="ディベートのテーマを入力...">
+        <button onclick="setupDebate()">ディベート設定</button>
+        <div id="setup-result"></div>
+        <button onclick="executeDebate()" style="display:none;" id="execute-button">ディベート実行</button>
+        <div id="debate-result"></div>
+    </div>
 
     <script>
+        let debateSetup = "";
+
         function sendMessage() {
             var userMessage = $('#user-input').val();
             if (userMessage.trim() === '') return;
@@ -24,12 +39,57 @@
                 url: '/chat',
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({message: userMessage}),
-                success: function(response) {
+                data: JSON.stringify({ message: userMessage }),
+                success: function (response) {
                     $('#chat-container').append('<p><strong>ボット:</strong> ' + response.response + '</p>');
+                }
+            });
+        }
+
+        function setupDebate() {
+            var topic = $('#debate-topic').val();
+            if (topic.trim() === '') return;
+
+            $('#setup-result').html('<p>ディベート設定を生成しています...</p>');
+
+            $.ajax({
+                url: '/debate_setup',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ topic: topic }),
+                success: function (response) {
+                    $('#setup-result').html('<h3>ディベート設定提案:</h3><p>' + response.response + '</p>');
+                    debateSetup = response.response;
+                    $('#execute-button').show();
+                }
+            });
+        }
+
+        function executeDebate() {
+            var topic = $('#debate-topic').val();
+            if (topic.trim() === '' || debateSetup === '') return;
+
+            $('#debate-result').html('<p>ディベートを実行しています...</p>');
+
+            $.ajax({
+                url: '/debate_execute',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ topic: topic, setup: debateSetup }),
+                success: function (response) {
+                    var formattedResponse = response.response
+                        .replace(/モデレーター:/g, '<strong>モデレーター:</strong>')
+                        .replace(/賛成側:/g, '<strong style="color: blue;">賛成側:</strong>')
+                        .replace(/反対側:/g, '<strong style="color: red;">反対側:</strong>')
+                        .replace(/評価者:/g, '<strong style="color: green;">評価者:</strong>')
+                        .replace(/勝者:/g, '<strong>勝者:</strong>')
+                        .replace(/評価理由:/g, '<strong>評価理由:</strong>')
+                        .replace(/\n/g, '<br>');
+                    $('#debate-result').html('<h3>ディベート結果:</h3><div>' + formattedResponse + '</div>');
                 }
             });
         }
     </script>
 </body>
+
 </html>
